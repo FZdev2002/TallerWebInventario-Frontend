@@ -5,7 +5,6 @@ const API_URL = "http://localhost:8080/api/lot";
 export async function getLots(): Promise<Lot[]> {
   const res = await fetch(API_URL);
 
-  // Si la respuesta es texto, la ignoramos sin romper la app
   const contentType = res.headers.get("content-type");
 
   try {
@@ -13,11 +12,11 @@ export async function getLots(): Promise<Lot[]> {
       return await res.json();
     } else {
       const text = await res.text();
-      console.warn("⚠️ Respuesta no JSON del backend:", text);
-      return []; // Devuelve lista vacía si no hay JSON
+      console.warn("Respuesta no JSON del backend:", text);
+      return [];
     }
   } catch (err) {
-    console.error("❌ Error al procesar respuesta de lotes:", err);
+    console.error("Error al procesar respuesta de lotes:", err);
     return [];
   }
 }
@@ -39,11 +38,11 @@ export async function createLot(lot: {
       return await res.json();
     } else {
       const text = await res.text();
-      console.warn("⚠️ Respuesta no JSON del backend:", text);
+      console.warn("Respuesta no JSON del backend:", text);
       return null;
     }
   } catch (err) {
-    console.error("❌ Error al crear lote:", err);
+    console.error("Error al crear lote:", err);
     return null;
   }
 }

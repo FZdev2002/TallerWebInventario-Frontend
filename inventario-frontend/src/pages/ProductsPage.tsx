@@ -7,6 +7,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [form, setForm] = useState({ name: "", brand: "", description: "", price: "" });
   const [editing, setEditing] = useState<Product | null>(null);
+  const [alert, setAlert] = useState<string | null>(null);
 
   useEffect(() => {
     getProducts().then(setProducts).catch(console.error);
@@ -19,28 +20,48 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editing) {
-      // Actualizar producto existente
-      const updated = await updateProduct(editing.id, {
-        name: form.name,
-        brand: form.brand,
-        description: form.description,
-        price: parseFloat(form.price),
-      });
-      setProducts(products.map(p => (p.id === editing.id ? updated : p)));
-      setEditing(null);
-    } else {
-      // Crear nuevo producto
-      const newProduct = await createProduct({
-        name: form.name,
-        brand: form.brand,
-        description: form.description,
-        price: parseFloat(form.price),
-      });
-      setProducts([...products, newProduct]);
+    // 🔍 Validación antes de enviar
+    if (!form.name.trim() || !form.brand.trim() || !form.price.trim()) {
+      setAlert("⚠️ Todos los campos obligatorios deben completarse");
+      setTimeout(() => setAlert(null), 3000);
+      return;
     }
 
-    setForm({ name: "", brand: "", description: "", price: "" });
+    if (parseFloat(form.price) <= 0) {
+      setAlert("⚠️ El precio debe ser mayor que 0");
+      setTimeout(() => setAlert(null), 3000);
+      return;
+    }
+
+    try {
+      if (editing) {
+        const updated = await updateProduct(editing.id, {
+          name: form.name,
+          brand: form.brand,
+          description: form.description,
+          price: parseFloat(form.price),
+        });
+        setProducts(products.map(p => (p.id === editing.id ? updated : p)));
+        setEditing(null);
+        setAlert("✅ Producto actualizado correctamente");
+      } else {
+        const newProduct = await createProduct({
+          name: form.name,
+          brand: form.brand,
+          description: form.description,
+          price: parseFloat(form.price),
+        });
+        setProducts([...products, newProduct]);
+        setAlert("✅ Producto agregado correctamente");
+      }
+
+      setForm({ name: "", brand: "", description: "", price: "" });
+    } catch (error) {
+      console.error("Error al guardar producto:", error);
+      setAlert("❌ Error al guardar producto");
+    }
+
+    setTimeout(() => setAlert(null), 3000);
   };
 
   const handleDelete = async (id: number) => {
@@ -62,40 +83,25 @@ export default function ProductsPage() {
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-3xl font-bold text-blue-600 mb-4">📦 Gestión de Productos</h1>
 
+      {alert && (
+        <div
+          className={`mb-4 p-2 rounded text-center font-medium ${
+            alert.startsWith("✅")
+              ? "bg-green-200 text-green-800"
+              : alert.startsWith("⚠️")
+              ? "bg-yellow-200 text-yellow-800"
+              : "bg-red-200 text-red-800"
+          }`}
+        >
+          {alert}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-4 rounded shadow">
-        <input
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="Nombre"
-          className="border p-2 rounded"
-          required
-        />
-        <input
-          name="brand"
-          value={form.brand}
-          onChange={handleChange}
-          placeholder="Marca"
-          className="border p-2 rounded"
-          required
-        />
-        <input
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Descripción"
-          className="border p-2 rounded"
-        />
-        <input
-          name="price"
-          type="number"
-          step="0.01"
-          value={form.price}
-          onChange={handleChange}
-          placeholder="Precio"
-          className="border p-2 rounded"
-          required
-        />
+        <input name="name" value={form.name} onChange={handleChange} placeholder="Nombre" className="border p-2 rounded" />
+        <input name="brand" value={form.brand} onChange={handleChange} placeholder="Marca" className="border p-2 rounded" />
+        <input name="description" value={form.description} onChange={handleChange} placeholder="Descripción" className="border p-2 rounded" />
+        <input name="price" type="number" step="0.01" value={form.price} onChange={handleChange} placeholder="Precio" className="border p-2 rounded" />
 
         <button
           type="submit"
