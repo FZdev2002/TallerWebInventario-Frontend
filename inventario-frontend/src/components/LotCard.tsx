@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Lot } from "../models/Lot";
-import { createMovement } from "../services/movementService";
+import { moveLot } from "../services/lotService";
 
 interface Props {
   lot: Lot;
@@ -34,8 +34,7 @@ export default function LotCard({ lot, onDelete }: Props) {
 
     try {
       // Registrar los movimientos en el backend
-      await createMovement(currentStore, lot.id, "SENT");
-      await createMovement(Number(newStore), lot.id, "RECEIVED");
+      await moveLot(lot.id, currentStore, Number(newStore));
 
       // Actualizar la sucursal del lote en memoria
       setCurrentStore(Number(newStore));
